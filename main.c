@@ -6,11 +6,12 @@
 
 void login();
 void createAccount();
-void bookingSystem();
+void bookingSystem(char userFileName[255], char password[255]);
 void changeTicket();
 void cancelReservation(char userFileName[255], char password[255]);
-enum movies{movie1, movie2}; //placeholder
-struct movieTickets{char name[255]; char date[255]; char seat[2];};
+void printMovieSeats(char seats[8][8], int arrayLength);
+char movies[][255] = {"movie1", "movie2", "movie3", "movie4"}; 
+struct movieTickets{char name[255]; char date[3][255]; char seat[8];}; //double array for the available dates and for the layout of the seats
 
 int main(){
     int input;
@@ -91,19 +92,18 @@ void login(){
     FILE *pUser1 = fopen(buf, "r"); //opens file with the username
     if (pUser1 == NULL){ //checks if file exists for user
         printf("\nThis user doesn't exist, L Bozo\n");
+        exit(0);
     }
+    printf("Enter your password: ");
+    fgets(password, 255, stdin);
+    password[strlen(password)-1] = '\0'; //removes whitespace at end of line
+    fgets(readFromFile, 255, pUser1); //reads file
+    if(strncmp(readFromFile, password, strlen(password)) == 0 && readFromFile[strlen(password)] == '\n'){ //checks the amount of characters in the string password and only compares those characters  
+        printf("You have succesfully logged in!\n");
+    }   
     else{
-        printf("Enter your password: ");
-        fgets(password, 255, stdin);
-        password[strlen(password)-1] = '\0'; //removes whitespace at end of line
-        fgets(readFromFile, 255, pUser1); //reads file
-        if(strncmp(readFromFile, password, strlen(password)) == 0 && readFromFile[strlen(password)] == '\n'){ //checks the amount of characters in the string password and only compares those characters  
-                printf("You have succesfully logged in!\n");
-        }   
-        else{
-            printf("Haxor!\n");
-            exit(0); //breaks function
-        }
+        printf("Haxor!\n");
+        exit(0); //breaks function
     }
     fgets(reservation, 255, pUser1); //reads 2nd line
     if(strncmp(reservation, "no", strlen(reservation)) == 0){ //no reservations
@@ -123,16 +123,20 @@ void login(){
                 printf("That aint a correct input broski\n");
             }
         }
-        bookingSystem();
+        bookingSystem(buf, password);
     }
     else{
-        char movieName[255];
         char movieTime[255];
-        char movieSeat[255];
-        fgets(movieName, 255, pUser1);
+        char movieSeatRow[255];
+        char movieSeatColumn[255];
         fgets(movieTime, 255, pUser1);
-        fgets(movieSeat, 255, pUser1);
-        printf("You currently have a reservation for %s at %s with the seat %s", movieName, movieTime, movieSeat);
+        fgets(movieSeatRow, 255, pUser1);
+        fgets(movieSeatColumn, 255, pUser1);
+        int movieSeatRow1 = atoi(movieSeatRow); //integer conversion
+        int movieSeatColumn1 = atoi(movieSeatColumn);
+        reservation[strlen(reservation)-1] = '\0'; //removes whitespace at end of line
+        movieTime[strlen(movieTime)-1] = '\0'; //removes whitespace at end of line
+        printf("You currently have a reservation for %s on %s with the seat %d,%d\n", reservation, movieTime, movieSeatRow1 + 1, movieSeatColumn1 + 1);
         fclose(pUser1);
         int userInput;
         while (true) {
@@ -157,12 +161,803 @@ void login(){
     
 }
 
-void bookingSystem(){
-    //use the enum
-    //use the struct
-    //add new line for movie name
-    //add new line for movie time
-    //add new line for movie seat
+void bookingSystem(char userFileName[255], char password[255]){
+    printf("Which movie would you like to book a ticket for?\n");
+    int userInput;
+    while(true){
+        for(int i = 0; i < sizeof(movies)/sizeof(movies[0]); i++){ //prints all movies
+            printf("%s(Enter %d)\n", movies[i], i+1);
+        }
+        scanf("%d", &userInput);
+        if(userInput == 1){
+            printf("\nBooking a ticket for movie 1");
+            struct movieTickets movie1 = {"movie1", {"monday", "wednesday", "saturday"}};
+            char date[255];
+            char buf;
+            scanf("%c", &buf); //clears input buffer
+            while (true){
+                printf("\nWhat date would you like to book in? The available dates are %s, %s, %s: ", movie1.date[0], movie1.date[1], movie1.date[2]);
+                fgets(date, 255, stdin);
+                for(int i = 0; i < strlen(date); i++){
+                    date[i] = tolower(date[i]); //converts lowercase
+                }
+                if(strncmp(date, movie1.date[0], strlen(movie1.date[0])) == 0){ //compares strings
+                    printf("\nBooking the ticket for %s\n", movie1.date[0]);
+                    char movieFileName[255];
+                    strcpy(movieFileName, "movie1");
+                    strcat(movieFileName, movie1.date[0]);
+                    strcat(movieFileName, ".txt");
+                    FILE *pMovie = fopen(movieFileName, "a+"); //creates file if doesn't exit or else opens it
+                    // if(pMovie = NULL){ idk this caused a segmentation error in my code bro ask gandalf or smth
+                    //     printf("error\n");
+                    //     exit(0);
+                    // }
+                    char seats[8][8]; //seats for the movie
+                    for (int i = 0; i < sizeof(seats)/sizeof(seats[0]); i++)
+                    {
+                        for (int j = 0; j < sizeof(seats[0])/sizeof(seats[0][0]); j++)
+                        {
+                            seats[i][j] = 'O'; //fills array with empty seats
+                        }
+                    }
+                    char row[255];
+                    char column[255];
+                    int x;
+                    int y;
+                    while(fgets(row, 255, pMovie)){ //reads file adn checks if the username is on it
+                        fgets(column, 255, pMovie); //reads 2nd line
+                        x = atoi(row); //x is the row
+                        y = atoi(column); //y is the column
+                        seats[y][x] = 'X';
+                    }
+                    int arrayLength = sizeof(seats)/sizeof(seats[0]); //have to do this cause C is stupid and identifies the array as a pointer when passed to the function
+                    printMovieSeats(seats, arrayLength);
+                    int userRow;
+                    int userColumn;
+                    while(true){
+                        printf("Above are the seats for the movie, with O for empty and X for taken\nWhich row would you like (1-8): ");
+                        scanf("%d", &userRow);
+                        printf("\nWhich column would you like (1-8): ");
+                        scanf("%d", &userColumn);
+                        if(seats[userRow-1][userColumn-1] == 'O'){
+                            printf("Booking seat.....\n");
+                            break;
+                        }
+                        else{
+                            printf("This seat is taken, try again\n");
+                        }
+                    }
+                    userRow -= 1;
+                    userColumn -= 1;
+                    scanf("%c", &buf); //clears input buffer
+                    seats[userRow][userColumn] = 'X';
+                    fprintf(pMovie, "%d\n%d\n", userRow, userColumn);
+                    movie1.seat[0] = (userRow, userColumn); //not necessary really, but I wanted to practice using structs
+                    printMovieSeats(seats, arrayLength);
+                    fclose(pMovie);
+                    FILE *pUser = fopen(userFileName, "w"); //to append to the file
+                    if(pUser == NULL){
+                        printf("Failure\n");
+                        exit(0);
+                    }
+                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, "movie1",movie1.date[0], userRow, userColumn);
+                    fclose(pUser);
+                }
+                else if(strncmp(date, movie1.date[1], strlen(movie1.date[1])) == 0){
+                    printf("\nBooking the ticket for %s\n", movie1.date[1]);
+                    char movieFileName[255];
+                    strcpy(movieFileName, "movie1");
+                    strcat(movieFileName, movie1.date[1]);
+                    strcat(movieFileName, ".txt");
+                    FILE *pMovie = fopen(movieFileName, "a+"); //creates file if doesn't exit or else opens it
+                    char seats[8][8]; //seats for the movie
+                    for (int i = 0; i < sizeof(seats)/sizeof(seats[0]); i++)
+                    {
+                        for (int j = 0; j < sizeof(seats[0])/sizeof(seats[0][0]); j++)
+                        {
+                            seats[i][j] = 'O'; //fills array with empty seats
+                        }
+                    }
+                    char row[255];
+                    char column[255];
+                    int x;
+                    int y;
+                    while(fgets(row, 255, pMovie)){ //reads file adn checks if the username is on it
+                        fgets(column, 255, pMovie); //reads 2nd line
+                        x = atoi(row); //x is the row
+                        y = atoi(column); //y is the column
+                        seats[y][x] = 'X';
+                    }
+                    int arrayLength = sizeof(seats)/sizeof(seats[0]); //have to do this cause C is stupid and identifies the array as a pointer when passed to the function
+                    printMovieSeats(seats, arrayLength);
+                    int userRow;
+                    int userColumn;
+                    while(true){
+                        printf("Above are the seats for the movie, with O for empty and X for taken\nWhich row would you like (1-8): ");
+                        scanf("%d", &userRow);
+                        printf("\nWhich column would you like (1-8): ");
+                        scanf("%d", &userColumn);
+                        if(seats[userRow-1][userColumn-1] == 'O'){
+                            printf("Booking seat.....\n");
+                            break;
+                        }
+                        else{
+                            printf("This seat is taken, try again\n");
+                        }
+                    }
+                    userRow -= 1;
+                    userColumn -= 1;
+                    scanf("%c", &buf); //clears input buffer
+                    seats[userRow][userColumn] = 'X';
+                    fprintf(pMovie, "%d\n%d\n", userRow, userColumn);
+                    movie1.seat[0] = (userRow, userColumn); //not necessary really, but I wanted to practice using structs
+                    printMovieSeats(seats, arrayLength);
+                    fclose(pMovie);
+                    FILE *pUser = fopen(userFileName, "w"); //to append to the file
+                    if(pUser == NULL){
+                        printf("Failure\n");
+                        exit(0);
+                    }
+                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, "movie1",movie1.date[1], userRow, userColumn);
+                    fclose(pUser);
+                }
+                else if(strncmp(date, movie1.date[2], strlen(movie1.date[2])) == 0){
+                     printf("\nBooking the ticket for %s\n", movie1.date[2]);
+                     char movieFileName[255];
+                    strcpy(movieFileName, "movie1");
+                    strcat(movieFileName, movie1.date[2]);
+                    strcat(movieFileName, ".txt");
+                    FILE *pMovie = fopen(movieFileName, "a+"); //creates file if doesn't exit or else opens it
+                    char seats[8][8]; //seats for the movie
+                    for (int i = 0; i < sizeof(seats)/sizeof(seats[0]); i++)
+                    {
+                        for (int j = 0; j < sizeof(seats[0])/sizeof(seats[0][0]); j++)
+                        {
+                            seats[i][j] = 'O'; //fills array with empty seats
+                        }
+                    }
+                    char row[255];
+                    char column[255];
+                    int x;
+                    int y;
+                    while(fgets(row, 255, pMovie)){ //reads file adn checks if the username is on it
+                        fgets(column, 255, pMovie); //reads 2nd line
+                        x = atoi(row); //x is the row
+                        y = atoi(column); //y is the column
+                        seats[y][x] = 'X';
+                    }
+                    int arrayLength = sizeof(seats)/sizeof(seats[0]); //have to do this cause C is stupid and identifies the array as a pointer when passed to the function
+                    printMovieSeats(seats, arrayLength);
+                    int userRow;
+                    int userColumn;
+                    while(true){
+                        printf("Above are the seats for the movie, with O for empty and X for taken\nWhich row would you like (1-8): ");
+                        scanf("%d", &userRow);
+                        printf("\nWhich column would you like (1-8): ");
+                        scanf("%d", &userColumn);
+                        if(seats[userRow-1][userColumn-1] == 'O'){
+                            printf("Booking seat.....\n");
+                            break;
+                        }
+                        else{
+                            printf("This seat is taken, try again\n");
+                        }
+                    }
+                    userRow -= 1;
+                    userColumn -= 1;
+                    scanf("%c", &buf); //clears input buffer
+                    seats[userRow][userColumn] = 'X';
+                    fprintf(pMovie, "%d\n%d\n", userRow, userColumn);
+                    movie1.seat[0] = (userRow, userColumn); //not necessary really, but I wanted to practice using structs
+                    printMovieSeats(seats, arrayLength);
+                    fclose(pMovie);
+                    FILE *pUser = fopen(userFileName, "w"); //to append to the file
+                    if(pUser == NULL){
+                        printf("Failure\n");
+                        exit(0);
+                    }
+                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, "movie1",movie1.date[2], userRow, userColumn);
+                    fclose(pUser);
+                }
+                else{
+                    printf("Not a correct date broski\n");
+                }
+            }
+
+        }
+        else if(userInput == 2){
+            printf("\nBooking a ticket for movie 2");
+            struct movieTickets movie2 = {"movie2", {"tuesday", "thursday", "saturday"}};
+            char date[255];
+            char buf;
+            scanf("%c", &buf); //clears input buffer
+            while (true){
+                printf("\nWhat date would you like to book in? The available dates are %s, %s, %s: ", movie2.date[0], movie2.date[1], movie2.date[2]);
+                fgets(date, 255, stdin);
+                for(int i = 0; i < strlen(date); i++){
+                    date[i] = tolower(date[i]); //converts lowercase
+                }
+                if(strncmp(date, movie2.date[0], strlen(movie2.date[0])) == 0){ //compares strings
+                    printf("\nBooking the ticket for %s\n", movie2.date[0]);
+                    char movieFileName[255];
+                    strcpy(movieFileName, "movie2");
+                    strcat(movieFileName, movie2.date[0]);
+                    strcat(movieFileName, ".txt");
+                    FILE *pMovie = fopen(movieFileName, "a+"); //creates file if doesn't exit or else opens it
+                    char seats[8][8]; //seats for the movie
+                    for (int i = 0; i < sizeof(seats)/sizeof(seats[0]); i++)
+                    {
+                        for (int j = 0; j < sizeof(seats[0])/sizeof(seats[0][0]); j++)
+                        {
+                            seats[i][j] = 'O'; //fills array with empty seats
+                        }
+                    }
+                    char row[255];
+                    char column[255];
+                    int x;
+                    int y;
+                    while(fgets(row, 255, pMovie)){ //reads file adn checks if the username is on it
+                        fgets(column, 255, pMovie); //reads 2nd line
+                        x = atoi(row); //x is the row
+                        y = atoi(column); //y is the column
+                        seats[y][x] = 'X';
+                    }
+                    int arrayLength = sizeof(seats)/sizeof(seats[0]); //have to do this cause C is stupid and identifies the array as a pointer when passed to the function
+                    printMovieSeats(seats, arrayLength);
+                    int userRow;
+                    int userColumn;
+                    while(true){
+                        printf("Above are the seats for the movie, with O for empty and X for taken\nWhich row would you like (1-8): ");
+                        scanf("%d", &userRow);
+                        printf("\nWhich column would you like (1-8): ");
+                        scanf("%d", &userColumn);
+                        if(seats[userRow-1][userColumn-1] == 'O'){
+                            printf("Booking seat.....\n");
+                            break;
+                        }
+                        else{
+                            printf("This seat is taken, try again\n");
+                        }
+                    }
+                    userRow -= 1;
+                    userColumn -= 1;
+                    scanf("%c", &buf); //clears input buffer
+                    seats[userRow][userColumn] = 'X';
+                    fprintf(pMovie, "%d\n%d\n", userRow, userColumn);
+                    movie2.seat[0] = (userRow, userColumn); //not necessary really, but I wanted to practice using structs
+                    printMovieSeats(seats, arrayLength);
+                    fclose(pMovie);
+                    FILE *pUser = fopen(userFileName, "w"); //to append to the file
+                    if(pUser == NULL){
+                        printf("Failure\n");
+                        exit(0);
+                    }
+                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, "movie2",movie2.date[0], userRow, userColumn);
+                    fclose(pUser);
+
+                }
+                else if(strncmp(date, movie2.date[1], strlen(movie2.date[1])) == 0){
+                    printf("\nBooking the ticket for %s\n", movie2.date[1]);
+                    char movieFileName[255];
+                    strcpy(movieFileName, "movie2");
+                    strcat(movieFileName, movie2.date[1]);
+                    strcat(movieFileName, ".txt");
+                    FILE *pMovie = fopen(movieFileName, "a+"); //creates file if doesn't exit or else opens it
+                    char seats[8][8]; //seats for the movie
+                    for (int i = 0; i < sizeof(seats)/sizeof(seats[0]); i++)
+                    {
+                        for (int j = 0; j < sizeof(seats[0])/sizeof(seats[0][0]); j++)
+                        {
+                            seats[i][j] = 'O'; //fills array with empty seats
+                        }
+                    }
+                    char row[255];
+                    char column[255];
+                    int x;
+                    int y;
+                    while(fgets(row, 255, pMovie)){ //reads file adn checks if the username is on it
+                        fgets(column, 255, pMovie); //reads 2nd line
+                        x = atoi(row); //x is the row
+                        y = atoi(column); //y is the column
+                        seats[y][x] = 'X';
+                    }
+                    int arrayLength = sizeof(seats)/sizeof(seats[0]); //have to do this cause C is stupid and identifies the array as a pointer when passed to the function
+                    printMovieSeats(seats, arrayLength);
+                    int userRow;
+                    int userColumn;
+                    while(true){
+                        printf("Above are the seats for the movie, with O for empty and X for taken\nWhich row would you like (1-8): ");
+                        scanf("%d", &userRow);
+                        printf("\nWhich column would you like (1-8): ");
+                        scanf("%d", &userColumn);
+                        if(seats[userRow-1][userColumn-1] == 'O'){
+                            printf("Booking seat.....\n");
+                            break;
+                        }
+                        else{
+                            printf("This seat is taken, try again\n");
+                        }
+                    }
+                    userRow -= 1;
+                    userColumn -= 1;
+                    scanf("%c", &buf); //clears input buffer
+                    seats[userRow][userColumn] = 'X';
+                    fprintf(pMovie, "%d\n%d\n", userRow, userColumn);
+                    movie2.seat[0] = (userRow, userColumn); //not necessary really, but I wanted to practice using structs
+                    printMovieSeats(seats, arrayLength);
+                    fclose(pMovie);
+                    FILE *pUser = fopen(userFileName, "w"); //to append to the file
+                    if(pUser == NULL){
+                        printf("Failure\n");
+                        exit(0);
+                    }
+                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, "movie2",movie2.date[1], userRow, userColumn);
+                    fclose(pUser);
+                }
+                else if(strncmp(date, movie2.date[2], strlen(movie2.date[2])) == 0){
+                     printf("\nBooking the ticket for %s\n", movie2.date[2]);
+                     char movieFileName[255];
+                    strcpy(movieFileName, "movie2");
+                    strcat(movieFileName, movie2.date[2]);
+                    strcat(movieFileName, ".txt");
+                    FILE *pMovie = fopen(movieFileName, "a+"); //creates file if doesn't exit or else opens it
+                    char seats[8][8]; //seats for the movie
+                    for (int i = 0; i < sizeof(seats)/sizeof(seats[0]); i++)
+                    {
+                        for (int j = 0; j < sizeof(seats[0])/sizeof(seats[0][0]); j++)
+                        {
+                            seats[i][j] = 'O'; //fills array with empty seats
+                        }
+                    }
+                    char row[255];
+                    char column[255];
+                    int x;
+                    int y;
+                    while(fgets(row, 255, pMovie)){ //reads file adn checks if the username is on it
+                        fgets(column, 255, pMovie); //reads 2nd line
+                        x = atoi(row); //x is the row
+                        y = atoi(column); //y is the column
+                        seats[y][x] = 'X';
+                    }
+                    int arrayLength = sizeof(seats)/sizeof(seats[0]); //have to do this cause C is stupid and identifies the array as a pointer when passed to the function
+                    printMovieSeats(seats, arrayLength);
+                    int userRow;
+                    int userColumn;
+                    while(true){
+                        printf("Above are the seats for the movie, with O for empty and X for taken\nWhich row would you like (1-8): ");
+                        scanf("%d", &userRow);
+                        printf("\nWhich column would you like (1-8): ");
+                        scanf("%d", &userColumn);
+                        if(seats[userRow-1][userColumn-1] == 'O'){
+                            printf("Booking seat.....\n");
+                            break;
+                        }
+                        else{
+                            printf("This seat is taken, try again\n");
+                        }
+                    }
+                    userRow -= 1;
+                    userColumn -= 1;
+                    scanf("%c", &buf); //clears input buffer
+                    seats[userRow][userColumn] = 'X';
+                    fprintf(pMovie, "%d\n%d\n", userRow, userColumn);
+                    movie2.seat[0] = (userRow, userColumn); //not necessary really, but I wanted to practice using structs
+                    printMovieSeats(seats, arrayLength);
+                    fclose(pMovie);
+                    FILE *pUser = fopen(userFileName, "w"); //to append to the file
+                    if(pUser == NULL){
+                        printf("Failure\n");
+                        exit(0);
+                    }
+                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, "movie2",movie2.date[2], userRow, userColumn);
+                    fclose(pUser);
+                }
+                else{
+                    printf("Not a correct date broski\n");
+                }
+            }
+        }
+        else if(userInput == 3){
+            printf("\nBooking a ticket for movie 3");
+            struct movieTickets movie3 = {"movie3", {"tuesday", "thursday", "saturday"}};
+            char date[255];
+            char buf;
+            scanf("%c", &buf); //clears input buffer
+            while (true){
+                printf("\nWhat date would you like to book in? The available dates are %s, %s, %s: ", movie3.date[0], movie3.date[1], movie3.date[2]);
+                fgets(date, 255, stdin);
+                for(int i = 0; i < strlen(date); i++){
+                    date[i] = tolower(date[i]); //converts lowercase
+                }
+                if(strncmp(date, movie3.date[0], strlen(movie3.date[0])) == 0){ //compares strings
+                    printf("\nBooking the ticket for %s\n", movie3.date[0]);
+                    char movieFileName[255];
+                    strcpy(movieFileName, "movie3");
+                    strcat(movieFileName, movie3.date[0]);
+                    strcat(movieFileName, ".txt");
+                    FILE *pMovie = fopen(movieFileName, "a+"); //creates file if doesn't exit or else opens it
+                    char seats[8][8]; //seats for the movie
+                    for (int i = 0; i < sizeof(seats)/sizeof(seats[0]); i++)
+                    {
+                        for (int j = 0; j < sizeof(seats[0])/sizeof(seats[0][0]); j++)
+                        {
+                            seats[i][j] = 'O'; //fills array with empty seats
+                        }
+                    }
+                    char row[255];
+                    char column[255];
+                    int x;
+                    int y;
+                    while(fgets(row, 255, pMovie)){ //reads file adn checks if the username is on it
+                        fgets(column, 255, pMovie); //reads 2nd line
+                        x = atoi(row); //x is the row
+                        y = atoi(column); //y is the column
+                        seats[y][x] = 'X';
+                    }
+                    int arrayLength = sizeof(seats)/sizeof(seats[0]); //have to do this cause C is stupid and identifies the array as a pointer when passed to the function
+                    printMovieSeats(seats, arrayLength);
+                    int userRow;
+                    int userColumn;
+                    while(true){
+                        printf("Above are the seats for the movie, with O for empty and X for taken\nWhich row would you like (1-8): ");
+                        scanf("%d", &userRow);
+                        printf("\nWhich column would you like (1-8): ");
+                        scanf("%d", &userColumn);
+                        if(seats[userRow-1][userColumn-1] == 'O'){
+                            printf("Booking seat.....\n");
+                            break;
+                        }
+                        else{
+                            printf("This seat is taken, try again\n");
+                        }
+                    }
+                    userRow -= 1;
+                    userColumn -= 1;
+                    scanf("%c", &buf); //clears input buffer
+                    seats[userRow][userColumn] = 'X';
+                    fprintf(pMovie, "%d\n%d\n", userRow, userColumn);
+                    movie3.seat[0] = (userRow, userColumn); //not necessary really, but I wanted to practice using structs
+                    printMovieSeats(seats, arrayLength);
+                    fclose(pMovie);
+                    FILE *pUser = fopen(userFileName, "w"); //to append to the file
+                    if(pUser == NULL){
+                        printf("Failure\n");
+                        exit(0);
+                    }
+                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, "movie3",movie3.date[0], userRow, userColumn);
+                    fclose(pUser);
+
+                }
+                else if(strncmp(date, movie3.date[1], strlen(movie3.date[1])) == 0){
+                    printf("\nBooking the ticket for %s\n", movie3.date[1]);
+                    char movieFileName[255];
+                    strcpy(movieFileName, "movie3");
+                    strcat(movieFileName, movie3.date[1]);
+                    strcat(movieFileName, ".txt");
+                    FILE *pMovie = fopen(movieFileName, "a+"); //creates file if doesn't exit or else opens it
+                    char seats[8][8]; //seats for the movie
+                    for (int i = 0; i < sizeof(seats)/sizeof(seats[0]); i++)
+                    {
+                        for (int j = 0; j < sizeof(seats[0])/sizeof(seats[0][0]); j++)
+                        {
+                            seats[i][j] = 'O'; //fills array with empty seats
+                        }
+                    }
+                    char row[255];
+                    char column[255];
+                    int x;
+                    int y;
+                    while(fgets(row, 255, pMovie)){ //reads file adn checks if the username is on it
+                        fgets(column, 255, pMovie); //reads 2nd line
+                        x = atoi(row); //x is the row
+                        y = atoi(column); //y is the column
+                        seats[y][x] = 'X';
+                    }
+                    int arrayLength = sizeof(seats)/sizeof(seats[0]); //have to do this cause C is stupid and identifies the array as a pointer when passed to the function
+                    printMovieSeats(seats, arrayLength);
+                    int userRow;
+                    int userColumn;
+                    while(true){
+                        printf("Above are the seats for the movie, with O for empty and X for taken\nWhich row would you like (1-8): ");
+                        scanf("%d", &userRow);
+                        printf("\nWhich column would you like (1-8): ");
+                        scanf("%d", &userColumn);
+                        if(seats[userRow-1][userColumn-1] == 'O'){
+                            printf("Booking seat.....\n");
+                            break;
+                        }
+                        else{
+                            printf("This seat is taken, try again\n");
+                        }
+                    }
+                    userRow -= 1;
+                    userColumn -= 1;
+                    scanf("%c", &buf); //clears input buffer
+                    seats[userRow][userColumn] = 'X';
+                    fprintf(pMovie, "%d\n%d\n", userRow, userColumn);
+                    movie3.seat[0] = (userRow, userColumn); //not necessary really, but I wanted to practice using structs
+                    printMovieSeats(seats, arrayLength);
+                    fclose(pMovie);
+                    FILE *pUser = fopen(userFileName, "w"); //to append to the file
+                    if(pUser == NULL){
+                        printf("Failure\n");
+                        exit(0);
+                    }
+                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, "movie3",movie3.date[1], userRow, userColumn);
+                    fclose(pUser);
+                }
+                else if(strncmp(date, movie3.date[2], strlen(movie3.date[2])) == 0){
+                     printf("\nBooking the ticket for %s\n", movie3.date[2]);
+                     char movieFileName[255];
+                    strcpy(movieFileName, "movie3");
+                    strcat(movieFileName, movie3.date[2]);
+                    strcat(movieFileName, ".txt");
+                    FILE *pMovie = fopen(movieFileName, "a+"); //creates file if doesn't exit or else opens it
+                    char seats[8][8]; //seats for the movie
+                    for (int i = 0; i < sizeof(seats)/sizeof(seats[0]); i++)
+                    {
+                        for (int j = 0; j < sizeof(seats[0])/sizeof(seats[0][0]); j++)
+                        {
+                            seats[i][j] = 'O'; //fills array with empty seats
+                        }
+                    }
+                    char row[255];
+                    char column[255];
+                    int x;
+                    int y;
+                    while(fgets(row, 255, pMovie)){ //reads file adn checks if the username is on it
+                        fgets(column, 255, pMovie); //reads 2nd line
+                        x = atoi(row); //x is the row
+                        y = atoi(column); //y is the column
+                        seats[y][x] = 'X';
+                    }
+                    int arrayLength = sizeof(seats)/sizeof(seats[0]); //have to do this cause C is stupid and identifies the array as a pointer when passed to the function
+                    printMovieSeats(seats, arrayLength);
+                    int userRow;
+                    int userColumn;
+                    while(true){
+                        printf("Above are the seats for the movie, with O for empty and X for taken\nWhich row would you like (1-8): ");
+                        scanf("%d", &userRow);
+                        printf("\nWhich column would you like (1-8): ");
+                        scanf("%d", &userColumn);
+                        if(seats[userRow-1][userColumn-1] == 'O'){
+                            printf("Booking seat.....\n");
+                            break;
+                        }
+                        else{
+                            printf("This seat is taken, try again\n");
+                        }
+                    }
+                    userRow -= 1;
+                    userColumn -= 1;
+                    scanf("%c", &buf); //clears input buffer
+                    seats[userRow][userColumn] = 'X';
+                    fprintf(pMovie, "%d\n%d\n", userRow, userColumn);
+                    movie3.seat[0] = (userRow, userColumn); //not necessary really, but I wanted to practice using structs
+                    printMovieSeats(seats, arrayLength);
+                    fclose(pMovie);
+                    FILE *pUser = fopen(userFileName, "w"); //to append to the file
+                    if(pUser == NULL){
+                        printf("Failure\n");
+                        exit(0);
+                    }
+                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, "movie3",movie3.date[2], userRow, userColumn);
+                    fclose(pUser);
+                }
+                else{
+                    printf("Not a correct date broski\n");
+                }
+            }
+        }
+        else if(userInput == 4){
+            printf("\nBooking a ticket for movie 4");
+            struct movieTickets movie4 = {"movie4", {"tuesday", "thursday", "saturday"}};
+            char date[255];
+            char buf;
+            scanf("%c", &buf); //clears input buffer
+            while (true){
+                printf("\nWhat date would you like to book in? The available dates are %s, %s, %s: ", movie4.date[0], movie4.date[1], movie4.date[2]);
+                fgets(date, 255, stdin);
+                for(int i = 0; i < strlen(date); i++){
+                    date[i] = tolower(date[i]); //converts lowercase
+                }
+                if(strncmp(date, movie4.date[0], strlen(movie4.date[0])) == 0){ //compares strings
+                    printf("\nBooking the ticket for %s\n", movie4.date[0]);
+                    char movieFileName[255];
+                    strcpy(movieFileName, "movie4");
+                    strcat(movieFileName, movie4.date[0]);
+                    strcat(movieFileName, ".txt");
+                    FILE *pMovie = fopen(movieFileName, "a+"); //creates file if doesn't exit or else opens it
+                    char seats[8][8]; //seats for the movie
+                    for (int i = 0; i < sizeof(seats)/sizeof(seats[0]); i++)
+                    {
+                        for (int j = 0; j < sizeof(seats[0])/sizeof(seats[0][0]); j++)
+                        {
+                            seats[i][j] = 'O'; //fills array with empty seats
+                        }
+                    }
+                    char row[255];
+                    char column[255];
+                    int x;
+                    int y;
+                    while(fgets(row, 255, pMovie)){ //reads file adn checks if the username is on it
+                        fgets(column, 255, pMovie); //reads 2nd line
+                        x = atoi(row); //x is the row
+                        y = atoi(column); //y is the column
+                        seats[y][x] = 'X';
+                    }
+                    int arrayLength = sizeof(seats)/sizeof(seats[0]); //have to do this cause C is stupid and identifies the array as a pointer when passed to the function
+                    printMovieSeats(seats, arrayLength);
+                    int userRow;
+                    int userColumn;
+                    while(true){
+                        printf("Above are the seats for the movie, with O for empty and X for taken\nWhich row would you like (1-8): ");
+                        scanf("%d", &userRow);
+                        printf("\nWhich column would you like (1-8): ");
+                        scanf("%d", &userColumn);
+                        if(seats[userRow-1][userColumn-1] == 'O'){
+                            printf("Booking seat.....\n");
+                            break;
+                        }
+                        else{
+                            printf("This seat is taken, try again\n");
+                        }
+                    }
+                    userRow -= 1;
+                    userColumn -= 1;
+                    scanf("%c", &buf); //clears input buffer
+                    seats[userRow][userColumn] = 'X';
+                    fprintf(pMovie, "%d\n%d\n", userRow, userColumn);
+                    movie4.seat[0] = (userRow, userColumn); //not necessary really, but I wanted to practice using structs
+                    printMovieSeats(seats, arrayLength);
+                    fclose(pMovie);
+                    FILE *pUser = fopen(userFileName, "w"); //to append to the file
+                    if(pUser == NULL){
+                        printf("Failure\n");
+                        exit(0);
+                    }
+                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, "movie4",movie4.date[0], userRow, userColumn);
+                    fclose(pUser);
+
+                }
+                else if(strncmp(date, movie4.date[1], strlen(movie4.date[1])) == 0){
+                    printf("\nBooking the ticket for %s\n", movie4.date[1]);
+                    char movieFileName[255];
+                    strcpy(movieFileName, "movie4");
+                    strcat(movieFileName, movie4.date[1]);
+                    strcat(movieFileName, ".txt");
+                    FILE *pMovie = fopen(movieFileName, "a+"); //creates file if doesn't exit or else opens it
+                    char seats[8][8]; //seats for the movie
+                    for (int i = 0; i < sizeof(seats)/sizeof(seats[0]); i++)
+                    {
+                        for (int j = 0; j < sizeof(seats[0])/sizeof(seats[0][0]); j++)
+                        {
+                            seats[i][j] = 'O'; //fills array with empty seats
+                        }
+                    }
+                    char row[255];
+                    char column[255];
+                    int x;
+                    int y;
+                    while(fgets(row, 255, pMovie)){ //reads file adn checks if the username is on it
+                        fgets(column, 255, pMovie); //reads 2nd line
+                        x = atoi(row); //x is the row
+                        y = atoi(column); //y is the column
+                        seats[y][x] = 'X';
+                    }
+                    int arrayLength = sizeof(seats)/sizeof(seats[0]); //have to do this cause C is stupid and identifies the array as a pointer when passed to the function
+                    printMovieSeats(seats, arrayLength);
+                    int userRow;
+                    int userColumn;
+                    while(true){
+                        printf("Above are the seats for the movie, with O for empty and X for taken\nWhich row would you like (1-8): ");
+                        scanf("%d", &userRow);
+                        printf("\nWhich column would you like (1-8): ");
+                        scanf("%d", &userColumn);
+                        if(seats[userRow-1][userColumn-1] == 'O'){
+                            printf("Booking seat.....\n");
+                            break;
+                        }
+                        else{
+                            printf("This seat is taken, try again\n");
+                        }
+                    }
+                    userRow -= 1;
+                    userColumn -= 1;
+                    scanf("%c", &buf); //clears input buffer
+                    seats[userRow][userColumn] = 'X';
+                    fprintf(pMovie, "%d\n%d\n", userRow, userColumn);
+                    movie4.seat[0] = (userRow, userColumn); //not necessary really, but I wanted to practice using structs
+                    printMovieSeats(seats, arrayLength);
+                    fclose(pMovie);
+                    FILE *pUser = fopen(userFileName, "w"); //to append to the file
+                    if(pUser == NULL){
+                        printf("Failure\n");
+                        exit(0);
+                    }
+                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, "movie4",movie4.date[1], userRow, userColumn);
+                    fclose(pUser);
+                }
+                else if(strncmp(date, movie4.date[2], strlen(movie4.date[2])) == 0){
+                     printf("\nBooking the ticket for %s\n", movie4.date[2]);
+                     char movieFileName[255];
+                    strcpy(movieFileName, "movie4");
+                    strcat(movieFileName, movie4.date[2]);
+                    strcat(movieFileName, ".txt");
+                    FILE *pMovie = fopen(movieFileName, "a+"); //creates file if doesn't exit or else opens it
+                    char seats[8][8]; //seats for the movie
+                    for (int i = 0; i < sizeof(seats)/sizeof(seats[0]); i++)
+                    {
+                        for (int j = 0; j < sizeof(seats[0])/sizeof(seats[0][0]); j++)
+                        {
+                            seats[i][j] = 'O'; //fills array with empty seats
+                        }
+                    }
+                    char row[255];
+                    char column[255];
+                    int x;
+                    int y;
+                    while(fgets(row, 255, pMovie)){ //reads file adn checks if the username is on it
+                        fgets(column, 255, pMovie); //reads 2nd line
+                        x = atoi(row); //x is the row
+                        y = atoi(column); //y is the column
+                        seats[y][x] = 'X';
+                    }
+                    int arrayLength = sizeof(seats)/sizeof(seats[0]); //have to do this cause C is stupid and identifies the array as a pointer when passed to the function
+                    printMovieSeats(seats, arrayLength);
+                    int userRow;
+                    int userColumn;
+                    while(true){
+                        printf("Above are the seats for the movie, with O for empty and X for taken\nWhich row would you like (1-8): ");
+                        scanf("%d", &userRow);
+                        printf("\nWhich column would you like (1-8): ");
+                        scanf("%d", &userColumn);
+                        if(seats[userRow-1][userColumn-1] == 'O'){
+                            printf("Booking seat.....\n");
+                            break;
+                        }
+                        else{
+                            printf("This seat is taken, try again\n");
+                        }
+                    }
+                    userRow -= 1;
+                    userColumn -= 1;
+                    scanf("%c", &buf); //clears input buffer
+                    seats[userRow][userColumn] = 'X';
+                    fprintf(pMovie, "%d\n%d\n", userRow, userColumn);
+                    movie4.seat[0] = (userRow, userColumn); //not necessary really, but I wanted to practice using structs
+                    printMovieSeats(seats, arrayLength);
+                    fclose(pMovie);
+                    FILE *pUser = fopen(userFileName, "w"); //to append to the file
+                    if(pUser == NULL){
+                        printf("Failure\n");
+                        exit(0);
+                    }
+                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, "movie4",movie4.date[2], userRow, userColumn);
+                    fclose(pUser);
+                }
+                else{
+                    printf("Not a correct date broski\n");
+                }
+            }
+        }
+        else{
+            printf("\nEnter a correct input bozo");
+        }
+        
+    }
+}
+void printMovieSeats(char seats[8][8], int arrayLength){
+    printf("\t 1 2 3 4 5 6 7 8\n");
+    for (int i = 0; i < arrayLength; i++){ //prints the seats
+        printf("%d\t", i+1);
+        printf("|");
+        for (int j = 0; j < sizeof(seats[0])/sizeof(seats[0][0]); j++)
+        {
+            printf("%c|", seats[i][j]);
+        }
+        printf("\n\t-----------------\n");
+    }
 }
 void changeTicket(){
 
