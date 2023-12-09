@@ -8,7 +8,7 @@ void login();
 void createAccount();
 void bookingSystem(char userFileName[255], char password[255]);
 void changeTicket();
-void cancelReservation(char userFileName[255], char password[255]);
+void cancelReservation(char userFileName[255], char password[255], char movieName[255], char movieDay[255], int row, int column);
 void printMovieSeats(char seats[8][8], int arrayLength);
 char movies[][255] = {"movie1", "movie2", "movie3", "movie4"}; 
 struct movieTickets{char name[255]; char date[3][255]; char seat[8];}; //double array for the available dates and for the layout of the seats
@@ -149,7 +149,7 @@ void login(){
             }
             else if(userInput == 2){
                 printf("\nCancelling reservation\n");
-                cancelReservation(buf, password);
+                cancelReservation(buf, password, reservation, movieTime, movieSeatRow1, movieSeatColumn1);
                 break;
             }
             else{
@@ -170,7 +170,7 @@ void bookingSystem(char userFileName[255], char password[255]){
         }
         scanf("%d", &userInput);
         if(userInput == 1){
-            printf("\nBooking a ticket for movie 1");
+            printf("Booking a ticket for movie 1");
             struct movieTickets movie1 = {"movie1", {"monday", "wednesday", "saturday"}};
             char date[255];
             char buf;
@@ -184,14 +184,10 @@ void bookingSystem(char userFileName[255], char password[255]){
                 if(strncmp(date, movie1.date[0], strlen(movie1.date[0])) == 0){ //compares strings
                     printf("\nBooking the ticket for %s\n", movie1.date[0]);
                     char movieFileName[255];
-                    strcpy(movieFileName, "movie1");
+                    strcpy(movieFileName, movie1.name);
                     strcat(movieFileName, movie1.date[0]);
                     strcat(movieFileName, ".txt");
-                    FILE *pMovie = fopen(movieFileName, "a+"); //creates file if doesn't exit or else opens it
-                    // if(pMovie = NULL){ idk this caused a segmentation error in my code bro ask gandalf or smth
-                    //     printf("error\n");
-                    //     exit(0);
-                    // }
+                    
                     char seats[8][8]; //seats for the movie
                     for (int i = 0; i < sizeof(seats)/sizeof(seats[0]); i++)
                     {
@@ -204,6 +200,11 @@ void bookingSystem(char userFileName[255], char password[255]){
                     char column[255];
                     int x;
                     int y;
+                    FILE *pMovie = fopen(movieFileName, "a+"); //creates file if doesn't exit or else opens it
+                    // if(pMovie = NULL){ //idk this caused a segmentation error in my code bro ask gandalf or smth
+                    //      printf("error\n");
+                    //      exit(0);
+                    // }
                     while(fgets(row, 255, pMovie)){ //reads file adn checks if the username is on it
                         fgets(column, 255, pMovie); //reads 2nd line
                         x = atoi(row); //x is the row
@@ -240,13 +241,15 @@ void bookingSystem(char userFileName[255], char password[255]){
                         printf("Failure\n");
                         exit(0);
                     }
-                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, "movie1",movie1.date[0], userRow, userColumn);
+                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, movie1.name, movie1.date[0], userRow, userColumn);
                     fclose(pUser);
+                    printf("BOOKED\n");
+                    exit(0);
                 }
                 else if(strncmp(date, movie1.date[1], strlen(movie1.date[1])) == 0){
                     printf("\nBooking the ticket for %s\n", movie1.date[1]);
                     char movieFileName[255];
-                    strcpy(movieFileName, "movie1");
+                    strcpy(movieFileName, movie1.name);
                     strcat(movieFileName, movie1.date[1]);
                     strcat(movieFileName, ".txt");
                     FILE *pMovie = fopen(movieFileName, "a+"); //creates file if doesn't exit or else opens it
@@ -298,13 +301,15 @@ void bookingSystem(char userFileName[255], char password[255]){
                         printf("Failure\n");
                         exit(0);
                     }
-                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, "movie1",movie1.date[1], userRow, userColumn);
+                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, movie1.name, movie1.date[1], userRow, userColumn);
                     fclose(pUser);
+                    printf("BOOKED\n");
+                    exit(0);
                 }
                 else if(strncmp(date, movie1.date[2], strlen(movie1.date[2])) == 0){
                      printf("\nBooking the ticket for %s\n", movie1.date[2]);
                      char movieFileName[255];
-                    strcpy(movieFileName, "movie1");
+                    strcpy(movieFileName, movie1.name);
                     strcat(movieFileName, movie1.date[2]);
                     strcat(movieFileName, ".txt");
                     FILE *pMovie = fopen(movieFileName, "a+"); //creates file if doesn't exit or else opens it
@@ -356,8 +361,10 @@ void bookingSystem(char userFileName[255], char password[255]){
                         printf("Failure\n");
                         exit(0);
                     }
-                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, "movie1",movie1.date[2], userRow, userColumn);
+                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, movie1.name, movie1.date[2], userRow, userColumn);
                     fclose(pUser);
+                    printf("BOOKED\n");
+                    exit(0);
                 }
                 else{
                     printf("Not a correct date broski\n");
@@ -380,7 +387,7 @@ void bookingSystem(char userFileName[255], char password[255]){
                 if(strncmp(date, movie2.date[0], strlen(movie2.date[0])) == 0){ //compares strings
                     printf("\nBooking the ticket for %s\n", movie2.date[0]);
                     char movieFileName[255];
-                    strcpy(movieFileName, "movie2");
+                    strcpy(movieFileName, movie2.name);
                     strcat(movieFileName, movie2.date[0]);
                     strcat(movieFileName, ".txt");
                     FILE *pMovie = fopen(movieFileName, "a+"); //creates file if doesn't exit or else opens it
@@ -432,14 +439,16 @@ void bookingSystem(char userFileName[255], char password[255]){
                         printf("Failure\n");
                         exit(0);
                     }
-                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, "movie2",movie2.date[0], userRow, userColumn);
+                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, movie2.name, movie2.date[0], userRow, userColumn);
                     fclose(pUser);
+                    printf("BOOKED\n");
+                    exit(0);
 
                 }
                 else if(strncmp(date, movie2.date[1], strlen(movie2.date[1])) == 0){
                     printf("\nBooking the ticket for %s\n", movie2.date[1]);
                     char movieFileName[255];
-                    strcpy(movieFileName, "movie2");
+                    strcpy(movieFileName, movie2.name);
                     strcat(movieFileName, movie2.date[1]);
                     strcat(movieFileName, ".txt");
                     FILE *pMovie = fopen(movieFileName, "a+"); //creates file if doesn't exit or else opens it
@@ -491,13 +500,15 @@ void bookingSystem(char userFileName[255], char password[255]){
                         printf("Failure\n");
                         exit(0);
                     }
-                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, "movie2",movie2.date[1], userRow, userColumn);
+                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, movie2.name, movie2.date[1], userRow, userColumn);
                     fclose(pUser);
+                    printf("BOOKED\n");
+                    exit(0);
                 }
                 else if(strncmp(date, movie2.date[2], strlen(movie2.date[2])) == 0){
                      printf("\nBooking the ticket for %s\n", movie2.date[2]);
                      char movieFileName[255];
-                    strcpy(movieFileName, "movie2");
+                    strcpy(movieFileName, movie2.name);
                     strcat(movieFileName, movie2.date[2]);
                     strcat(movieFileName, ".txt");
                     FILE *pMovie = fopen(movieFileName, "a+"); //creates file if doesn't exit or else opens it
@@ -549,8 +560,10 @@ void bookingSystem(char userFileName[255], char password[255]){
                         printf("Failure\n");
                         exit(0);
                     }
-                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, "movie2",movie2.date[2], userRow, userColumn);
+                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, movie2.name, movie2.date[2], userRow, userColumn);
                     fclose(pUser);
+                    printf("BOOKED\n");
+                    exit(0);
                 }
                 else{
                     printf("Not a correct date broski\n");
@@ -559,7 +572,7 @@ void bookingSystem(char userFileName[255], char password[255]){
         }
         else if(userInput == 3){
             printf("\nBooking a ticket for movie 3");
-            struct movieTickets movie3 = {"movie3", {"tuesday", "thursday", "saturday"}};
+            struct movieTickets movie3 = {"movie3", {"wednesday", "thursday", "sunday"}};
             char date[255];
             char buf;
             scanf("%c", &buf); //clears input buffer
@@ -572,7 +585,7 @@ void bookingSystem(char userFileName[255], char password[255]){
                 if(strncmp(date, movie3.date[0], strlen(movie3.date[0])) == 0){ //compares strings
                     printf("\nBooking the ticket for %s\n", movie3.date[0]);
                     char movieFileName[255];
-                    strcpy(movieFileName, "movie3");
+                    strcpy(movieFileName, movie3.name);
                     strcat(movieFileName, movie3.date[0]);
                     strcat(movieFileName, ".txt");
                     FILE *pMovie = fopen(movieFileName, "a+"); //creates file if doesn't exit or else opens it
@@ -624,14 +637,16 @@ void bookingSystem(char userFileName[255], char password[255]){
                         printf("Failure\n");
                         exit(0);
                     }
-                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, "movie3",movie3.date[0], userRow, userColumn);
+                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, movie3.name, movie3.date[0], userRow, userColumn);
                     fclose(pUser);
+                    printf("BOOKED!\n");
+                    exit(0);
 
                 }
                 else if(strncmp(date, movie3.date[1], strlen(movie3.date[1])) == 0){
                     printf("\nBooking the ticket for %s\n", movie3.date[1]);
                     char movieFileName[255];
-                    strcpy(movieFileName, "movie3");
+                    strcpy(movieFileName, movie3.name);
                     strcat(movieFileName, movie3.date[1]);
                     strcat(movieFileName, ".txt");
                     FILE *pMovie = fopen(movieFileName, "a+"); //creates file if doesn't exit or else opens it
@@ -683,13 +698,15 @@ void bookingSystem(char userFileName[255], char password[255]){
                         printf("Failure\n");
                         exit(0);
                     }
-                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, "movie3",movie3.date[1], userRow, userColumn);
+                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, movie3.name, movie3.date[1], userRow, userColumn);
                     fclose(pUser);
+                    printf("BOOKED!\n");
+                    exit(0);
                 }
                 else if(strncmp(date, movie3.date[2], strlen(movie3.date[2])) == 0){
                      printf("\nBooking the ticket for %s\n", movie3.date[2]);
                      char movieFileName[255];
-                    strcpy(movieFileName, "movie3");
+                    strcpy(movieFileName, movie3.name);
                     strcat(movieFileName, movie3.date[2]);
                     strcat(movieFileName, ".txt");
                     FILE *pMovie = fopen(movieFileName, "a+"); //creates file if doesn't exit or else opens it
@@ -741,8 +758,10 @@ void bookingSystem(char userFileName[255], char password[255]){
                         printf("Failure\n");
                         exit(0);
                     }
-                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, "movie3",movie3.date[2], userRow, userColumn);
+                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, movie3.name, movie3.date[2], userRow, userColumn);
                     fclose(pUser);
+                    printf("BOOKED!\n");
+                    exit(0);
                 }
                 else{
                     printf("Not a correct date broski\n");
@@ -764,7 +783,7 @@ void bookingSystem(char userFileName[255], char password[255]){
                 if(strncmp(date, movie4.date[0], strlen(movie4.date[0])) == 0){ //compares strings
                     printf("\nBooking the ticket for %s\n", movie4.date[0]);
                     char movieFileName[255];
-                    strcpy(movieFileName, "movie4");
+                    strcpy(movieFileName, movie4.name);
                     strcat(movieFileName, movie4.date[0]);
                     strcat(movieFileName, ".txt");
                     FILE *pMovie = fopen(movieFileName, "a+"); //creates file if doesn't exit or else opens it
@@ -816,14 +835,16 @@ void bookingSystem(char userFileName[255], char password[255]){
                         printf("Failure\n");
                         exit(0);
                     }
-                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, "movie4",movie4.date[0], userRow, userColumn);
+                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, movie4.name, movie4.date[0], userRow, userColumn);
                     fclose(pUser);
+                    printf("BOOKED!\n");
+                    exit(0);
 
                 }
                 else if(strncmp(date, movie4.date[1], strlen(movie4.date[1])) == 0){
                     printf("\nBooking the ticket for %s\n", movie4.date[1]);
                     char movieFileName[255];
-                    strcpy(movieFileName, "movie4");
+                    strcpy(movieFileName, movie4.name);
                     strcat(movieFileName, movie4.date[1]);
                     strcat(movieFileName, ".txt");
                     FILE *pMovie = fopen(movieFileName, "a+"); //creates file if doesn't exit or else opens it
@@ -875,13 +896,15 @@ void bookingSystem(char userFileName[255], char password[255]){
                         printf("Failure\n");
                         exit(0);
                     }
-                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, "movie4",movie4.date[1], userRow, userColumn);
+                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, movie4.name, movie4.date[1], userRow, userColumn);
                     fclose(pUser);
+                    printf("BOOKED!\n");
+                    exit(0);
                 }
                 else if(strncmp(date, movie4.date[2], strlen(movie4.date[2])) == 0){
                      printf("\nBooking the ticket for %s\n", movie4.date[2]);
                      char movieFileName[255];
-                    strcpy(movieFileName, "movie4");
+                    strcpy(movieFileName, movie4.name);
                     strcat(movieFileName, movie4.date[2]);
                     strcat(movieFileName, ".txt");
                     FILE *pMovie = fopen(movieFileName, "a+"); //creates file if doesn't exit or else opens it
@@ -933,8 +956,10 @@ void bookingSystem(char userFileName[255], char password[255]){
                         printf("Failure\n");
                         exit(0);
                     }
-                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, "movie4",movie4.date[2], userRow, userColumn);
+                    fprintf(pUser, "%s\n%s\n%s\n%d\n%d", password, movie4.name, movie4.date[2], userRow, userColumn);
                     fclose(pUser);
+                    printf("BOOKED!\n");
+                    exit(0);
                 }
                 else{
                     printf("Not a correct date broski\n");
@@ -962,12 +987,46 @@ void printMovieSeats(char seats[8][8], int arrayLength){
 void changeTicket(){
 
 }
-void cancelReservation(char userFileName[255], char password[255]){
+void cancelReservation(char userFileName[255], char password[255], char movieName[255], char movieDay[255], int row, int column){
     FILE *pCan = fopen(userFileName, "w"); //overrides old user file
     if (pCan == NULL){
         printf("File could not be opened");
     }
     fprintf(pCan, "%s\nno", password); //cancels old reservations
     fclose(pCan);
+    strcat(movieName, movieDay);
+    strcat(movieName, ".txt"); //makes movieName the filename of the movie
+    char seatRow[255];
+    char seatColumn[255]; //to store the row and columns on the file
+    FILE *pMoviee = fopen(movieName, "r+"); //append
+    if(pMoviee == NULL){
+        printf("Error!");
+        exit(0);
+    }
+    int remainingSeats[128];
+    short int i = 0;
+    while (fgets(seatRow, 255, pMoviee)){ //ends when there is nothing to read
+        fgets(seatColumn, 255, pMoviee); //reads the movie files
+        int seatRoww = atoi(seatRow);
+        int seatColumnn = atoi(seatColumn); //converts to integers
+        if(seatRoww != row && seatColumnn != column){
+            remainingSeats[i] = seatRoww;
+            remainingSeats[i+1] = seatColumnn;
+            i += 2;
+        }
+    }
+    fclose(pMoviee);
+    FILE *pMovi = fopen(movieName, "w"); //overrides old file
+    // if(pMovi == NULL){
+    //     printf("Error!");
+    //     exit(0);
+    // }
+   
+    for(short int j = 0; j < i; j++){ //creates a new movie file for that date without these user seats
+        fprintf(pMovi, "%d\n", remainingSeats[j]);
+    } 
+    fclose(pMovi);
     printf("You have no more reservations!\n");
+    exit(0);
+    //NEED TO PARSE THROUGH MOVIE FILE AND REMOVE THE SEAT ALLOCATIONS WHICH ARE FOUND FROM THE USER FILE
 }
