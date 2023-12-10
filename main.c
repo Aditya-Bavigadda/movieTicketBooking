@@ -7,12 +7,12 @@
 void login();
 void createAccount();
 void bookingSystem(char userFileName[255], char password[255]);
-void changeTicket();
+void changeTicket(char userFileName[255], char password[255], char movieName[255], char movieDay[255], int row, int column);
 void cancelReservation(char userFileName[255], char password[255], char movieName[255], char movieDay[255], int row, int column);
 void printMovieSeats(char seats[8][8], int arrayLength);
 char movies[][255] = {"movie1", "movie2", "movie3", "movie4"}; 
 struct movieTickets{char name[255]; char date[3][255]; char seat[8];}; //double array for the available dates and for the layout of the seats
-
+bool changingTicket = false;
 int main(){
     int input;
     char throwaway;
@@ -143,8 +143,8 @@ void login(){
             printf("Would you like to change your reservation(enter 1) or would you like to cancel your reservation(enter 2): ");
             scanf("%d", &userInput);
             if(userInput == 1){
-                printf("\nChanging reservation...\n");
-                changeTicket();
+                printf("\nCancelling initial reservation...\n");
+                changeTicket(buf, password, reservation, movieTime, movieSeatRow1, movieSeatColumn1);
                 break;
             }
             else if(userInput == 2){
@@ -984,8 +984,11 @@ void printMovieSeats(char seats[8][8], int arrayLength){
         printf("\n\t-----------------\n");
     }
 }
-void changeTicket(){
-
+void changeTicket(char userFileName[255], char password[255], char movieName[255], char movieDay[255], int row, int column){
+    //cancel the reservation
+    changingTicket = true;
+    cancelReservation(userFileName, password, movieName, movieDay, row, column);
+    bookingSystem(userFileName, password);
 }
 void cancelReservation(char userFileName[255], char password[255], char movieName[255], char movieDay[255], int row, int column){
     FILE *pCan = fopen(userFileName, "w"); //overrides old user file
@@ -1021,12 +1024,12 @@ void cancelReservation(char userFileName[255], char password[255], char movieNam
     //     printf("Error!");
     //     exit(0);
     // }
-   
     for(short int j = 0; j < i; j++){ //creates a new movie file for that date without these user seats
         fprintf(pMovi, "%d\n", remainingSeats[j]);
     } 
     fclose(pMovi);
     printf("You have no more reservations!\n");
-    exit(0);
-    //NEED TO PARSE THROUGH MOVIE FILE AND REMOVE THE SEAT ALLOCATIONS WHICH ARE FOUND FROM THE USER FILE
+    if(changingTicket == false){
+        exit(0);
+    }
 }
